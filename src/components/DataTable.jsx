@@ -4,9 +4,12 @@ import { Column } from "primereact/column";
 import "./DataTable.css";
 
 import {
+  deleteMultipleRows,
+  deleteRow,
   fetchUsers,
   resetChanges,
   savechanges,
+  undo,
   updateUser,
 } from "../redux/usersSlice";
 import { useSelector, useDispatch } from "react-redux";
@@ -52,15 +55,19 @@ const DataTableEx = () => {
   ];
 
   const [columns, setColumns] = useState(initialColumns);
-  const users = useSelector((state) => state.userStore.previousState.users);
-  const changesDone = useSelector(
-    (state) => state.userStore.previousState.changesDone
-  );
+
+  const users = useSelector((state) => state.userStore.present);
+  const changesDone = useSelector((state) => state.userStore.changesDone);
+  const pastLength = useSelector((state) => state.userStore.past.length);
+
   // const [productDialog, setProductDialog] = useState(false);
   const [deleteUserDialog, setDeleteUserDialog] = useState(false);
-  const [deleteUsersDialog, setDeleteUsersDialog] = useState(false);
+
+  const [deleteDialog, setDeleteDialog] = useState(false);
   // const [user, setProduc] = useState(emptyProduct);
+
   const [selectedUsers, setSelectedUsers] = useState(null);
+
   const [submitted, setSubmitted] = useState(false);
   const [globalFilter, setGlobalFilter] = useState(null);
   const toast = useRef(null);
@@ -68,23 +75,6 @@ const DataTableEx = () => {
 
   useEffect(() => {
     dispatch(fetchUsers());
-
-    // axios.get("https://jsonplaceholder.typicode.com/users").then((response) => {
-    //   let data = [];
-    //   response.data.map((item) => {
-    //     data.push(item);
-    //   });
-    //   response.data.map((item) => {
-    //     data.push(item);
-    //   });
-    //   response.data.map((item) => {
-    //     data.push(item);
-    //   });
-
-    //   //   console.log(data);
-
-    //   setPost(data);
-    // });
   }, [dispatch]);
 
   const textEditor = (options) => {
@@ -121,10 +111,6 @@ const DataTableEx = () => {
     // setProductDialog(true);
   };
 
-  const confirmDeleteSelected = () => {
-    // setDeleteProductsDialog(true);
-  };
-
   const importCSV = (e) => {
     // const file = e.files[0];
     // const reader = new FileReader();
@@ -159,7 +145,7 @@ const DataTableEx = () => {
   const exportCSV = () => {
     dt.current.exportCSV();
   };
-  const leftToolbarTemplate = () => {
+  const leftToolbarTemplate = (rowData) => {
     return (
       <React.Fragment>
         <div className="bottom-actions">
@@ -173,14 +159,23 @@ const DataTableEx = () => {
             label="Delete"
             icon="pi pi-trash"
             className="p-button-danger"
-            onClick={confirmDeleteSelected}
+            onClick={showDeleteDialog}
             disabled={!selectedUsers || !selectedUsers.length}
           />
           <Button
             label="Undo"
             icon="pi pi-undo"
             className="p-button-help"
-            disabled={!changesDone}
+            disabled={pastLength === 0}
+            onClick={() => {
+              dispatch(undo());
+              toast.current.show({
+                severity: "success",
+                summary: "Successful",
+                detail: "Undo success",
+                life: 3000,
+              });
+            }}
             // disabled={!selectedUsers || !selectedUsers.length}
           />
         </div>
@@ -220,8 +215,83 @@ const DataTableEx = () => {
     let _usres2 = [...users];
     let { newData, index } = e;
     _usres2[index] = newData;
+    
     dispatch(updateUser(_usres2));
+    toast.current.show({
+      severity: "success",
+      summary: "Successful",
+      detail: "User Updated",
+      life: 3000,
+    });
   };
+
+  const deleteRowData = () => {
+    console.log(selectedUsers);
+    // dispatch(deleteRow(rowData));
+    if (selectedUsers.length === 1) {
+      dispatch(deleteRow(selectedUsers[0]));
+      toast.current.show({
+        severity: "success",
+        summary: "Successful",
+        detail: "User Deleted",
+        life: 3000,
+      });
+    } else {
+      // selectedUsers.map((user) => {
+      //   return dispatch(deleteRow(user));
+      // });
+      dispatch(deleteMultipleRows(selectedUsers));
+      toast.current.show({
+        severity: "success",
+        summary: "Successful",
+        detail: "Users Deleted",
+        life: 3000,
+      });
+    }
+    setSelectedUsers(null);
+    setDeleteDialog(false)
+  };
+
+  const actionBodyTemplate = (rowData) => {
+    return (
+      <React.Fragment>
+        {/* <Button
+          icon="pi pi-pencil"
+          className="p-button-rounded p-button-success mr-2"
+        /> */}
+        <Button
+          icon="pi pi-trash"
+          className="p-button-rounded p-button-warning"
+          onClick={() => deleteRowData(rowData)}
+        />
+      </React.Fragment>
+    );
+  };
+
+  const hideDeleteProductsDialog = () => {
+    setDeleteDialog(false);
+  };
+
+  const showDeleteDialog = () => {
+    setDeleteDialog(true);
+  };
+
+  const deleteProductsDialogFooter = (
+    <React.Fragment>
+      <Button
+        label="No"
+        icon="pi pi-times"
+        className="p-button-text"
+        onClick={hideDeleteProductsDialog}
+      />
+      <Button
+        label="Yes"
+        icon="pi pi-check"
+        className="p-button-text"
+        onClick={deleteRowData}
+      />
+    </React.Fragment>
+  );
 
   return (
     <div className="data-table">
@@ -241,7 +311,6 @@ const DataTableEx = () => {
           <button onClick={() => buttonHandler(5)}>5</button>
           <button onClick={() => buttonHandler(6)}>6</button>
           <button onClick={() => buttonHandler(7)}>7</button>
-          {/* <button onClick={() => buttonHandler(0)}>None</button> */}
         </div>
 
         <DataTable
@@ -253,40 +322,51 @@ const DataTableEx = () => {
           showGridlines
           scrollDirection="both"
           scrollable
-          scrollHeight="300px"
+          scrollHeight="500px"
           paginator
-          rows={3}
+          rows={5}
           globalFilter={globalFilter}
           rowsPerPageOptions={[5, 10, 25]}
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
           editMode="row"
           onRowEditComplete={onRowEditComplete}
+          selection={selectedUsers}
+          onSelectionChange={(e) => setSelectedUsers(e.value)}
         >
           <Column
             selectionMode="multiple"
             style={{ width: "3rem" }}
             exportable={false}
           ></Column>
-          {dynamicColumns}
           <Column
             rowEditor
-            // headerStyle={{ width: "10%", minWidth: "8rem" }}
             style={{ width: "6rem" }}
             bodyStyle={{ textAlign: "center" }}
           ></Column>
+          {/* <Column
+            body={actionBodyTemplate}
+            exportable={false}
+            style={{ minWidth: "8rem" }}
+          ></Column> */}
+          {dynamicColumns}
         </DataTable>
 
         <div className="bottom-actions">
           <Button
-            label="Reset"
+            label="Revert to start of the Day"
             icon="pi pi-refresh"
             className="p-button-help"
             onClick={() => {
               dispatch(resetChanges());
+              toast.current.show({
+                severity: "success",
+                summary: "Successful",
+                detail: "All changes are dicarded",
+                life: 3000,
+              });
             }}
             disabled={!changesDone}
-            // disabled={!selectedUsers || !selectedUsers.length}
           />
 
           <Button
@@ -295,10 +375,28 @@ const DataTableEx = () => {
             className="p-button-success"
             onClick={() => dispatch(savechanges())}
             disabled={!changesDone}
-            // disabled={!selectedUsers || !selectedUsers.length}
           />
         </div>
       </div>
+
+      <Dialog
+        visible={deleteDialog}
+        style={{ width: "450px" }}
+        header="Confirm"
+        modal
+        footer={deleteProductsDialogFooter}
+        onHide={hideDeleteProductsDialog}
+      >
+        <div className="confirmation-content">
+          <i
+            className="pi pi-exclamation-triangle mr-3"
+            style={{ fontSize: "2rem" }}
+          />
+          {selectedUsers && (
+            <span>Are you sure you want to delete the selected products?</span>
+          )}
+        </div>
+      </Dialog>
     </div>
   );
 };
