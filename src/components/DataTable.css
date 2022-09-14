@@ -1,0 +1,32 @@
+.data-table{
+    display: flex;
+    flex-direction: column;
+
+     
+}
+.actions{
+    display: flex;
+    justify-content: center;
+    margin: 2rem;
+    gap: 1rem;
+   
+    /* justify-content: space-between; */
+}
+
+.table {
+    /* background-color: aqua; */
+    /* margin: 2rem; */
+    /* align-items: center; */
+    
+}
+
+.columns {
+    /* border: 1px solid black; */
+    /* padding:0 4rem; */
+}
+
+.bottom-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
