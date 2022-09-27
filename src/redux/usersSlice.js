@@ -4,9 +4,9 @@ import axios from "axios";
 const initialState = {
   past: [],
   present: [],
-
+  newTable: [],
+  oldItems: [],
   originalData: [],
-
   changesDone: false,
 };
 
@@ -61,7 +61,6 @@ export const userSlice = createSlice({
       state.past = [];
       state.originalData = state.present;
       // state.changesDone = false;
-      
     },
     deleteMultipleRows: (state, action) => {
       // state.past.push(state.present);
@@ -75,13 +74,96 @@ export const userSlice = createSlice({
       state.originalData = state.present;
       // state.changesDone = false;
     },
+    addRow: (state, action) => {
+      state.oldItems = [...state.newTable];
+      state.newTable = [
+        ...state.newTable,
+        ...state.present.filter((val) => val.id === action.payload.id),
+      ];
+      state.present = [
+        ...state.present.filter((element) => element.id !== action.payload.id),
+      ];
+      // state.newTable = [
+      //   ...state.newTable,
+      //   ...state.present.filter((val) => {
+      //     if (val.id === action.payload.id) {
+      //       state.present = [
+      //         ...state.present.filter((element) => element.id !== val.id),
+      //       ];
+      //       if (!state.newTable.some((y) => y.id === val.id)) {
+      //         return val;
+      //       }
+      //     }
+      //   }),
+      // ];
+    },
+    addPrimaryRow: (state, action) => {
+      state.oldItems = [...state.newTable];
+      state.present = [
+        ...state.present,
+        ...state.newTable.filter((val) => val.id === action.payload.id),
+      ];
+      state.newTable = [
+        ...state.newTable.filter((element) => element.id !== action.payload.id),
+      ];
+      // state.newTable = [
+      //   ...state.newTable,
+      //   ...state.present.filter((val) => {
+      //     if (val.id === action.payload.id) {
+      //       state.present = [
+      //         ...state.present.filter((element) => element.id !== val.id),
+      //       ];
+      //       if (!state.newTable.some((y) => y.id === val.id)) {
+      //         return val;
+      //       }
+      //     }
+      //   }),
+      // ];
+    },
+
+    addMultipleRows: (state, action) => {
+      state.oldItems = state.newTable;
+      action.payload.map((item) => {
+        state.newTable = [
+          ...state.newTable,
+          ...state.present.filter((val) => val.id === item.id),
+        ];
+        state.present = [
+          ...state.present.filter((element) => element.id !== item.id),
+        ];
+        // let temp = state.present.filter((val) => val.id === item.id);
+        // const res = temp.filter(
+        //   (x) => !state.newTable.some((y) => y.id === x.id)
+        // );
+
+        // state.newTable = [...state.newTable, ...res];
+      });
+    },
+    addPrimaryMultipleRows: (state, action) => {
+      state.oldItems = state.newTable;
+      action.payload.map((item) => {
+        state.present = [
+          ...state.present,
+          ...state.newTable.filter((val) => val.id === item.id),
+        ];
+        state.newTable = [
+          ...state.newTable.filter((element) => element.id !== item.id),
+        ];
+        
+        // let temp = state.present.filter((val) => val.id === item.id);
+        // const res = temp.filter(
+        //   (x) => !state.newTable.some((y) => y.id === x.id)
+        // );
+
+        // state.newTable = [...state.newTable, ...res];
+      });
+    },
 
     resetChanges: (state) => {
       state.past = [];
       state.present = state.originalData;
       state.changesDone = false;
     },
-    
   },
   extraReducers(builder) {
     builder.addCase(fetchUsers.fulfilled, (state, action) => {
@@ -100,6 +182,10 @@ export const {
   undo,
   deleteRow,
   deleteMultipleRows,
+  addRow,
+  addMultipleRows,
+  addPrimaryRow,
+  addPrimaryMultipleRows,
 } = userSlice.actions;
 export { fetchUsers };
 export default userSlice.reducer;

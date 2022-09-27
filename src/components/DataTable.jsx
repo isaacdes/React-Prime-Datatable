@@ -38,6 +38,7 @@ import { InputNumber } from "primereact/inputnumber";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import CustomModal from "./Modal";
+import PlayGroundTable from "./plsygtound";
 
 const DataTableEx = () => {
   const dispatch = useDispatch();
@@ -624,6 +625,10 @@ const DataTableEx = () => {
         mouseTrack
         mouseTrackLeft={10}
       />
+
+
+      {/* playgrounf */}
+      <PlayGroundTable/>
     </div>
   );
 };
