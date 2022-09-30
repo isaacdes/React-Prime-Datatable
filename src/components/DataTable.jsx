@@ -46,6 +46,7 @@ import {
   addrow,
   chnageColumnDenisity,
   moveToModifier,
+  moveToPlayground,
 } from "../redux/productsSlice";
 import ModifierTable from "./ModifierTable";
 
@@ -542,6 +543,10 @@ const DataTableEx = () => {
             icon="pi pi-arrow-up"
             id="arrow"
             className="p-button-help"
+            onClick={() => {
+              dispatch(moveToPlayground());
+              
+            }}
           />
         </div>
       </div>

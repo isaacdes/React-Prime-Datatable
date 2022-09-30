@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import "./DataTable.css";
 import {
   addrow,
+  changeModifierSelectedData,
   getResponse,
   onCellEdit,
   onRowEdit,
@@ -64,7 +65,8 @@ const ModifierTable = ({ columnWidth, addRow }) => {
 
   useEffect(() => {
     console.log(selectedProducts);
-    dispatch(selectedProductChange(selectedProducts));
+    dispatch(changeModifierSelectedData(selectedProducts))
+    // dispatch(selectedProductChange(selectedProducts));
   }, [selectedProducts, dispatch]);
 
   const statusEditor = (options) => {

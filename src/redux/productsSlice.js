@@ -49,6 +49,15 @@ export const productSlice = createSlice({
       // state.currentData.selectedProducts = []
     },
 
+    changeModifierSelectedData: (state,action) =>{
+      state.currentData.modifierSelectedData = action.payload;
+    },
+    moveToPlayground:(state,action)=>{
+      state.currentData.defaultData = [
+        ...state.currentData.defaultData,
+        ...state.currentData.modifierSelectedData,
+      ];
+    },
     //we can add operations her later
     addrow: (state) => {
       const len = state.currentData.defaultData?.length;
@@ -122,6 +131,8 @@ export const {
   onCellEdit,
   moveToModifier,
   chnageColumnDenisity,
+  changeModifierSelectedData,
+  moveToPlayground
 } = productSlice.actions;
 export default productSlice.reducer;
 export { getResponse };
