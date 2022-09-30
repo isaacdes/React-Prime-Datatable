@@ -7,6 +7,7 @@ import { playGroundConstants } from "./data";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { useDispatch, useSelector } from "react-redux";
+import "./DataTable.css";
 import {
   addrow,
   getResponse,
@@ -17,7 +18,7 @@ import {
 import { updateCellEdit } from "../redux/usersSlice";
 // import Table from 'react-bootstrap/Table';
 
-const PlayGroundTable = ({ columnWidth, addRow }) => {
+const ModifierTable = ({ columnWidth, addRow }) => {
   const dispatch = useDispatch();
   const classes = useStyles();
   const tableRef = useRef();
@@ -29,7 +30,7 @@ const PlayGroundTable = ({ columnWidth, addRow }) => {
   const [selectedProducts, setSelectedProducts] = useState(null);
 
   const products = useSelector(
-    (state) => state.playground.currentData.defaultData
+    (state) => state.playground.currentData.modiferData
   );
   const selectedColumns = useSelector(
     (state) => state.playground.currentData.selectedData
@@ -64,7 +65,6 @@ const PlayGroundTable = ({ columnWidth, addRow }) => {
   useEffect(() => {
     console.log(selectedProducts);
     dispatch(selectedProductChange(selectedProducts));
-    
   }, [selectedProducts, dispatch]);
 
   const statusEditor = (options) => {
@@ -225,6 +225,11 @@ const PlayGroundTable = ({ columnWidth, addRow }) => {
     return `${tableWidth}%`;
   };
 
+  const colorHandler = (row) =>{
+    
+    return false;
+  }
+
   return (
     <div>
       <div className={classes.container} id="tableContainer" ref={tableRef}>
@@ -242,6 +247,7 @@ const PlayGroundTable = ({ columnWidth, addRow }) => {
           stripedRows
           first={first}
           rows={rows}
+          rowClassName={(e)=> (colorHandler(e) ? "red": null)}
           onPage={onCustomPage}
           resizableColumns
           columnResizeMode="expand"
@@ -250,7 +256,7 @@ const PlayGroundTable = ({ columnWidth, addRow }) => {
           size="medium"
           scrollHeight="calc(100vh - 340px)"
           style={{ width: getWidthOfDataTable() }}
-          className={classes.datatableContainer}
+        //   className={classes.datatableContainer} 
           showGridlines
         >
           {/* {columns.map(({ field, header }) => {
@@ -278,4 +284,4 @@ const PlayGroundTable = ({ columnWidth, addRow }) => {
   );
 };
 
-export default PlayGroundTable;
+export default ModifierTable;

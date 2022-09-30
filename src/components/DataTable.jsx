@@ -5,6 +5,8 @@ import ReactDOM from "react-dom";
 import "./DataTable.css";
 import { Tooltip } from "primereact/tooltip";
 // import {Modal} from 'primereact'
+import dark from "../assets/dark.png";
+import light from "../assets/light.png";
 
 import {
   deleteMultipleRows,
@@ -18,6 +20,7 @@ import {
   addMultipleRows,
   addPrimaryRow,
   addPrimaryMultipleRows,
+  updateCellEdit,
 } from "../redux/usersSlice";
 import { useSelector, useDispatch } from "react-redux";
 
@@ -39,6 +42,12 @@ import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import CustomModal from "./Modal";
 import PlayGroundTable from "./plsygtound";
+import {
+  addrow,
+  chnageColumnDenisity,
+  moveToModifier,
+} from "../redux/productsSlice";
+import ModifierTable from "./ModifierTable";
 
 const DataTableEx = () => {
   const dispatch = useDispatch();
@@ -81,6 +90,13 @@ const DataTableEx = () => {
 
   const [selectedUsers, setSelectedUsers] = useState(null);
 
+  //images toggle
+  const [highActive, setHighActive] = useState(false);
+  const [defaultActive, setDefaultActive] = useState(true);
+  const [lowActive, setLowActive] = useState(false);
+
+  const noOfColumns = useSelector((state) => state.playground.columnDensity);
+
   const [submitted, setSubmitted] = useState(false);
   const [globalFilter, setGlobalFilter] = useState(null);
   const toast = useRef(null);
@@ -90,24 +106,71 @@ const DataTableEx = () => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
+  useEffect(() => {
+    if (noOfColumns === 0 || noOfColumns === null) {
+      setDefaultActive(true);
+      setHighActive(false);
+      setLowActive(false);
+    } else if (noOfColumns === 7) {
+      setDefaultActive(false);
+      setHighActive(true);
+      setLowActive(false);
+    } else if (noOfColumns === 12) {
+      setDefaultActive(false);
+      setHighActive(false);
+      setLowActive(true);
+    }
+  }, [noOfColumns]);
+
+  const chnageColumn = (val) => {
+    if (val === 0 && defaultActive === false) {
+      dispatch(chnageColumnDenisity(0));
+    }
+    if (val === 7 && highActive === false) {
+      dispatch(chnageColumnDenisity(7));
+    }
+    if (val === 12 && lowActive === false) {
+      dispatch(chnageColumnDenisity(12));
+    }
+  };
+
   const textEditor = (options) => {
     return (
       <InputText
-        type='text'
+        type="text"
         value={options.value}
         onChange={(e) => options.editorCallback(e.target.value)}
       />
     );
   };
+  const isPositiveInteger = (val) => {
+    let str = String(val);
+    str = str.trim();
+    if (!str) {
+      return false;
+    }
+    str = str.replace(/^0+/, "") || "0";
+    let n = Math.floor(Number(str));
+    return n !== Infinity && String(n) === str && n >= 0;
+  };
+
+  const cellEditComplete = (e) => {
+    let { rowData, newValue, field, originalEvent: event } = e;
+    console.log("rowdata", rowData);
+    console.log("newvalyue:", newValue);
+    console.log("event:", e);
+    dispatch(updateCellEdit(e));
+  };
 
   const dynamicColumns = columns.map((col, i) => {
     return (
       <Column
-        className='columns'
+        className="columns"
         key={col.field}
         field={col.field}
         header={col.header}
         editor={(options) => textEditor(options)}
+        onCellEditComplete={cellEditComplete}
         style={{
           width: columnSize,
           padding: "1rem",
@@ -161,24 +224,26 @@ const DataTableEx = () => {
   const leftToolbarTemplate = (rowData) => {
     return (
       <React.Fragment>
-        <div className='bottom-actions'>
+        <div className="bottom-actions">
           <Button
-            label='New'
-            icon='pi pi-plus'
-            className='p-button-success mr-2'
-            onClick={openNew}
+            label="New"
+            icon="pi pi-plus"
+            className="p-button-success mr-2"
+            onClick={() => {
+              dispatch(addrow());
+            }}
           />
           <Button
-            label='Delete'
-            icon='pi pi-trash'
-            className='p-button-danger'
+            label="Delete"
+            icon="pi pi-trash"
+            className="p-button-danger"
             onClick={showDeleteDialog}
             disabled={!selectedUsers || !selectedUsers.length}
           />
           <Button
-            label='Undo'
-            icon='pi pi-undo'
-            className='p-button-help'
+            label="Undo"
+            icon="pi pi-undo"
+            className="p-button-help"
             disabled={pastLength === 0}
             onClick={() => {
               dispatch(undo());
@@ -200,19 +265,19 @@ const DataTableEx = () => {
     return (
       <React.Fragment>
         <FileUpload
-          mode='basic'
-          name='demo[]'
+          mode="basic"
+          name="demo[]"
           auto
-          url='https://primefaces.org/primereact/showcase/upload.php'
-          accept='.csv'
-          chooseLabel='Import'
-          className='mr-2 inline-block'
+          url="https://primefaces.org/primereact/showcase/upload.php"
+          accept=".csv"
+          chooseLabel="Import"
+          className="mr-2 inline-block"
           onUpload={importCSV}
         />
         <Button
-          label='Export'
-          icon='pi pi-upload'
-          className='p-button-help'
+          label="Export"
+          icon="pi pi-upload"
+          className="p-button-help"
           onClick={exportCSV}
         />
       </React.Fragment>
@@ -228,6 +293,8 @@ const DataTableEx = () => {
     let _usres2 = [...users];
     let { newData, index } = e;
     _usres2[index] = newData;
+    console.log("e:", e);
+    console.log(_usres2);
 
     dispatch(updateUser(_usres2));
     toast.current.show({
@@ -273,8 +340,8 @@ const DataTableEx = () => {
           className="p-button-rounded p-button-success mr-2"
         /> */}
         <Button
-          icon='pi pi-trash'
-          className='p-button-rounded p-button-warning'
+          icon="pi pi-trash"
+          className="p-button-rounded p-button-warning"
           onClick={() => deleteRowData(rowData)}
         />
       </React.Fragment>
@@ -338,15 +405,15 @@ const DataTableEx = () => {
   const deleteProductsDialogFooter = (
     <React.Fragment>
       <Button
-        label='No'
-        icon='pi pi-times'
-        className='p-button-text'
+        label="No"
+        icon="pi pi-times"
+        className="p-button-text"
         onClick={hideDeleteProductsDialog}
       />
       <Button
-        label='Yes'
-        icon='pi pi-check'
-        className='p-button-text'
+        label="Yes"
+        icon="pi pi-check"
+        className="p-button-text"
         onClick={deleteRowData}
       />
     </React.Fragment>
@@ -354,15 +421,15 @@ const DataTableEx = () => {
   const addNewItemsDialogFooter = (
     <React.Fragment>
       <Button
-        label='No'
-        icon='pi pi-times'
-        className='p-button-text'
+        label="No"
+        icon="pi pi-times"
+        className="p-button-text"
         onClick={hideAddProductsDialog}
       />
       <Button
-        label='Yes'
-        icon='pi pi-check'
-        className='p-button-text'
+        label="Yes"
+        icon="pi pi-check"
+        className="p-button-text"
         onClick={addUserToTable}
       />
     </React.Fragment>
@@ -402,15 +469,15 @@ const DataTableEx = () => {
   };
 
   return (
-    <div className='data-table'>
+    <div className="data-table">
       <Toast ref={toast} />
-      <div className='card'>
+      <div className="card">
         <Toolbar
-          className='mb-4'
+          className="mb-4"
           left={leftToolbarTemplate}
           right={rightToolbarTemplate}
         ></Toolbar>
-        <div className='actions'>
+        <div className="actions">
           <button onClick={() => buttonHandler(14)}>All</button>
           <button onClick={() => buttonHandler(1)}>1</button>
           <button onClick={() => buttonHandler(3)}>3</button>
@@ -419,185 +486,97 @@ const DataTableEx = () => {
           <button onClick={() => buttonHandler(6)}>6</button>
           <button onClick={() => buttonHandler(7)}>7</button>
         </div>
+      </div>
 
-        <DataTable
-          resizableColumns
-          columnResizeMode='fit'
-          ref={dt}
-          value={users}
-          rowClassName={(e) => (primaryRowColorHandler(e) ? "green" : null)}
-          header='User Data'
-          dataKey='id'
-          responsiveLayout='scroll'
-          showGridlines
-          scrollDirection='both'
-          scrollable
-          scrollHeight='500px'
-          paginator
-          rows={5}
-          globalFilter={globalFilter}
-          rowsPerPageOptions={[5, 10, 25]}
-          paginatorTemplate='FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown'
-          currentPageReportTemplate='Showing {first} to {last} of {totalRecords} products'
-          editMode='row'
-          onRowEditComplete={onRowEditComplete}
-          selection={selectedUsers}
-          onSelectionChange={(e) => setSelectedUsers(e.value)}
+      <div className="images">
+        <div
+          className="high"
+          onClick={() => {
+            chnageColumn(7);
+          }}
         >
-          <Column
-            selectionMode='multiple'
-            style={{ width: "3rem" }}
-            exportable={false}
-          ></Column>
-          <Column
-            rowEditor
-            style={{ width: "6rem" }}
-            bodyStyle={{ textAlign: "center" }}
-          ></Column>
-          {/* <Column
-            body={actionBodyTemplate}
-            exportable={false}
-            style={{ minWidth: "8rem" }}
-          ></Column> */}
-          {dynamicColumns}
-        </DataTable>
-
-        <div className='bottom-actions'>
-          <Button
-            // label='Revert to start of the Day'
-            icon='pi pi-arrow-down'
-            id='arrow'
-            className='p-button-help'
-            onClick={addUserToTable}
-          />
-          <Button
-            // label='Revert to start of the Day'
-            icon='pi pi-arrow-up'
-            id='arrow'
-            className='p-button-help'
-            onClick={addUserToPrimaryTable}
-          />
-
-          <Button
-            label='View'
-            id='view'
-            icon='pi pi-save'
-            className='p-button-success'
-            onClick={() => setIsOpen(true)}
-          />
+          <label htmlFor="">High</label>
+          {highActive ? <img src={light} alt="" /> : <img src={dark} alt="" />}
+        </div>
+        <div
+          className="default"
+          onClick={() => {
+            chnageColumn(0);
+          }}
+        >
+          <label htmlFor="">Default</label>
+          {defaultActive ? (
+            <img src={light} alt="" />
+          ) : (
+            <img src={dark} alt="" />
+          )}
+        </div>
+        <div
+          className="low"
+          onClick={() => {
+            chnageColumn(12);
+          }}
+        >
+          <label htmlFor="">Low</label>
+          {lowActive ? <img src={light} alt="" /> : <img src={dark} alt="" />}
         </div>
       </div>
 
-      {ReactDOM.createPortal(
-        isOpen && (
-          <CustomModal setIsOpen={setIsOpen}>
-            <DataTable
-              resizableColumns
-              columnResizeMode='fit'
-              ref={dt}
-              value={users}
-              header='User Data'
-              dataKey='id'
-              responsiveLayout='scroll'
-              showGridlines
-              scrollDirection='both'
-              scrollable
-              scrollHeight='500px'
-              paginator
-              rows={5}
-              globalFilter={globalFilter}
-              rowsPerPageOptions={[5, 10, 25]}
-              paginatorTemplate='FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown'
-              currentPageReportTemplate='Showing {first} to {last} of {totalRecords} products'
-              editMode='row'
-              onRowEditComplete={onRowEditComplete}
-              selection={selectedUsers}
-              onSelectionChange={(e) => setSelectedUsers(e.value)}
-            >
-              <Column
-                selectionMode='multiple'
-                style={{ width: "3rem" }}
-                exportable={false}
-              ></Column>
-              <Column
-                rowEditor
-                style={{ width: "6rem" }}
-                bodyStyle={{ textAlign: "center" }}
-              ></Column>
-              {/* <Column
-            body={actionBodyTemplate}
-            exportable={false}
-            style={{ minWidth: "8rem" }}
-          ></Column> */}
-              {dynamicColumns}
-            </DataTable>
-          </CustomModal>
-        ),
-        document.getElementById("root")
-      )}
-      <Dialog
-        visible={deleteDialog}
-        style={{ width: "450px" }}
-        header='Confirm'
-        modal
-        footer={deleteProductsDialogFooter}
-        onHide={hideDeleteProductsDialog}
-      >
-        <div className='confirmation-content'>
-          <i
-            className='pi pi-exclamation-triangle mr-3'
-            style={{ fontSize: "2rem" }}
-          />
-          {selectedUsers && (
-            <span>Are you sure you want to add the selected products?</span>
-          )}
-        </div>
-      </Dialog>
-      <Dialog
-        visible={addDialog}
-        style={{ width: "450px" }}
-        header='Confirm'
-        modal
-        footer={addNewItemsDialogFooter}
-        onHide={hideAddProductsDialog}
-      >
-        <div className='confirmation-content'>
-          <i
-            className='pi pi-exclamation-triangle mr-3'
-            style={{ fontSize: "2rem" }}
-          />
-          {selectedUsers && (
-            <span>Are you sure you want to add the selected products?</span>
-          )}
-        </div>
-      </Dialog>
+      {/* playgrounf */}
+      <div className="playground">
+        <PlayGroundTable columnWidth={columnSize} />
 
-      <DataTable
+        <div className="bottom-actions">
+          <Button
+            // label='Revert to start of the Day'
+            icon="pi pi-arrow-down"
+            id="arrow"
+            className="p-button-help"
+            onClick={() => {
+              dispatch(moveToModifier());
+              
+            }}
+          />
+          <Button
+            // label='Revert to start of the Day'
+            icon="pi pi-arrow-up"
+            id="arrow"
+            className="p-button-help"
+          />
+        </div>
+      </div>
+      <div className="modifier">
+        <ModifierTable columnWidth={columnSize} />
+      </div>
+
+      {/* <DataTable
         resizableColumns
-        columnResizeMode='fit'
+        columnResizeMode="fit"
         ref={dt}
-        value={newTable}
-        rowClassName={(e) => (rowColorHandler(e) ? "red" : null)}
-        header='User Data'
-        dataKey='id'
-        responsiveLayout='scroll'
+        value={users}
+        rowClassName={(e) => (primaryRowColorHandler(e) ? "green" : null)}
+        header="User Data 1"
+        dataKey="id"
+        responsiveLayout="scroll"
         showGridlines
-        scrollDirection='both'
+        scrollDirection="both"
         scrollable
-        scrollHeight='500px'
+        scrollHeight="500px"
         paginator
         rows={5}
         globalFilter={globalFilter}
         rowsPerPageOptions={[5, 10, 25]}
-        paginatorTemplate='FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown'
-        currentPageReportTemplate='Showing {first} to {last} of {totalRecords} products'
-        editMode='row'
-        onRowEditComplete={onRowEditComplete}
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+        // editMode="row"
+        editMode="cell"
+        selectionMode="checkbox"
+        // onRowEditComplete={onRowEditComplete}
         selection={selectedUsers}
         onSelectionChange={(e) => setSelectedUsers(e.value)}
       >
         <Column
-          selectionMode='multiple'
+          selectionMode="multiple"
           style={{ width: "3rem" }}
           exportable={false}
         ></Column>
@@ -611,24 +590,172 @@ const DataTableEx = () => {
             exportable={false}
             style={{ minWidth: "8rem" }}
           ></Column> */}
-        {dynamicColumns}
-      </DataTable>
+      {/* {dynamicColumns} */}
+      {/* </DataTable> */}
+
+      {/* <div className="bottom-actions">
+        <Button
+          // label='Revert to start of the Day'
+          icon="pi pi-arrow-down"
+          id="arrow"
+          className="p-button-help"
+          onClick={addUserToTable}
+        />
+        <Button
+          // label='Revert to start of the Day'
+          icon="pi pi-arrow-up"
+          id="arrow"
+          className="p-button-help"
+          onClick={addUserToPrimaryTable}
+        />
+
+        <Button
+          label="View"
+          id="view"
+          icon="pi pi-save"
+          className="p-button-success"
+          onClick={() => setIsOpen(true)}
+        />
+      </div> */}
+
+      {/* {ReactDOM.createPortal(
+        isOpen && (
+          <CustomModal setIsOpen={setIsOpen}>
+            <DataTable
+              resizableColumns
+              columnResizeMode="fit"
+              ref={dt}
+              value={users}
+              header="User Data3"
+              dataKey="id"
+              responsiveLayout="scroll"
+              showGridlines
+              scrollDirection="both"
+              scrollable
+              scrollHeight="500px"
+              paginator
+              rows={5}
+              globalFilter={globalFilter}
+              rowsPerPageOptions={[5, 10, 25]}
+              paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+              currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+              // editMode="row"
+              editMode="cell"
+              // onRowEditComplete={onRowEditComplete}
+              selection={selectedUsers}
+              onSelectionChange={(e) => setSelectedUsers(e.value)}
+            >
+              <Column
+                selectionMode="multiple"
+                style={{ width: "3rem" }}
+                exportable={false}
+              ></Column>
+              <Column
+                rowEditor
+                style={{ width: "6rem" }}
+                bodyStyle={{ textAlign: "center" }}
+              ></Column>
+              {/* <Column
+            body={actionBodyTemplate}
+            exportable={false}
+            style={{ minWidth: "8rem" }}
+          ></Column> */}
+      {/* {dynamicColumns} */}
+      {/* </DataTable> */}
+      {/* // </CustomModal> */}
+      {/* ), */}
+      {/* // document.getElementById("root") */}
+      {/* // )}  */}
+      <Dialog
+        visible={deleteDialog}
+        style={{ width: "450px" }}
+        header="Confirm"
+        modal
+        footer={deleteProductsDialogFooter}
+        onHide={hideDeleteProductsDialog}
+      >
+        <div className="confirmation-content">
+          <i
+            className="pi pi-exclamation-triangle mr-3"
+            style={{ fontSize: "2rem" }}
+          />
+          {selectedUsers && (
+            <span>Are you sure you want to add the selected products?</span>
+          )}
+        </div>
+      </Dialog>
+      <Dialog
+        visible={addDialog}
+        style={{ width: "450px" }}
+        header="Confirm"
+        modal
+        footer={addNewItemsDialogFooter}
+        onHide={hideAddProductsDialog}
+      >
+        <div className="confirmation-content">
+          <i
+            className="pi pi-exclamation-triangle mr-3"
+            style={{ fontSize: "2rem" }}
+          />
+          {selectedUsers && (
+            <span>Are you sure you want to add the selected products?</span>
+          )}
+        </div>
+      </Dialog>
+
+      {/* <DataTable
+        resizableColumns
+        columnResizeMode="fit"
+        ref={dt}
+        value={newTable}
+        rowClassName={(e) => (rowColorHandler(e) ? "red" : null)}
+        header="User Data2"
+        dataKey="id"
+        responsiveLayout="scroll"
+        showGridlines
+        scrollDirection="both"
+        scrollable
+        scrollHeight="500px"
+        paginator
+        rows={5}
+        globalFilter={globalFilter}
+        rowsPerPageOptions={[5, 10, 25]}
+        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+        editMode="cell"
+        // onRowEditComplete={onRowEditComplete}
+        selection={selectedUsers}
+        onSelectionChange={(e) => setSelectedUsers(e.value)}
+      >
+        <Column
+          selectionMode="multiple"
+          style={{ width: "3rem" }}
+          exportable={false}
+        ></Column>
+        <Column
+          rowEditor
+          style={{ width: "6rem" }}
+          bodyStyle={{ textAlign: "center" }}
+        ></Column>
+        {/* <Column
+            body={actionBodyTemplate}
+            exportable={false}
+            style={{ minWidth: "8rem" }}
+          ></Column> */}
+      {/* {dynamicColumns} */}
+      {/* </DataTable> */}
       <Tooltip
-        target='.red'
-        content='Element recently added'
+        target=".red"
+        content="Element recently added"
         mouseTrack
         mouseTrackLeft={10}
       />
       <Tooltip
-        target='.p-selectable-row'
-        content='Element recently added'
+        target=".p-selectable-row"
+        content="Element recently added"
         mouseTrack
         mouseTrackLeft={10}
       />
-
-
-      {/* playgrounf */}
-      <PlayGroundTable/>
     </div>
   );
 };

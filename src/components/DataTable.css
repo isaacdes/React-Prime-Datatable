@@ -76,3 +76,9 @@
   .green {
     background: #22C55E !important;
   }
+
+  .images{
+    display: flex;
+    justify-content: end;
+    /* flex-direction: column; */
+  }

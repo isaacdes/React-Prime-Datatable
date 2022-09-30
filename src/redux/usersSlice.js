@@ -149,7 +149,7 @@ export const userSlice = createSlice({
         state.newTable = [
           ...state.newTable.filter((element) => element.id !== item.id),
         ];
-        
+
         // let temp = state.present.filter((val) => val.id === item.id);
         // const res = temp.filter(
         //   (x) => !state.newTable.some((y) => y.id === x.id)
@@ -163,6 +163,14 @@ export const userSlice = createSlice({
       state.past = [];
       state.present = state.originalData;
       state.changesDone = false;
+    },
+
+    updateCellEdit: (state, action) => {
+      state.past.push(state.present);
+      let temp = [...state.present];
+      let { newRowData, rowIndex } = action.payload;
+      temp[rowIndex] = newRowData;
+      state.present = temp;
     },
   },
   extraReducers(builder) {
@@ -178,6 +186,7 @@ export const userSlice = createSlice({
 export const {
   updateUser,
   resetChanges,
+  updateCellEdit,
   savechanges,
   undo,
   deleteRow,

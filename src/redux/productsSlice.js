@@ -7,6 +7,8 @@ const initialState = {
     defaultData: [],
     statuses: [],
     selectedProducts: [],
+    modiferData: [],
+    modifierSelectedData: [],
   },
   orginalData: {
     selectedData: [],
@@ -15,8 +17,9 @@ const initialState = {
     selectedProducts: [],
   },
   history: [],
+  density: null,
   count: 0,
-  columnDensity: null,
+  columnDensity: 0,
 };
 
 const columnDensity = createAsyncThunk("saveDensity", async () => {
@@ -38,6 +41,14 @@ export const productSlice = createSlice({
   name: "playground",
   initialState,
   reducers: {
+    moveToModifier: (state) => {
+      state.currentData.modiferData = [
+        ...state.currentData.modiferData,
+        ...state.currentData.selectedProducts,
+      ];
+      // state.currentData.selectedProducts = []
+    },
+
     //we can add operations her later
     addrow: (state) => {
       const len = state.currentData.defaultData?.length;
@@ -75,6 +86,16 @@ export const productSlice = createSlice({
     selectedProductChange: (state, action) => {
       state.currentData.selectedProducts = action.payload;
     },
+    onCellEdit: (state, action) => {
+      // state.past.push(state.present);
+      let temp = [...state.currentData.defaultData];
+      let { newRowData, rowIndex } = action.payload;
+      temp[rowIndex] = newRowData;
+      state.currentData.defaultData = temp;
+    },
+    chnageColumnDenisity: (state, action) => {
+      state.columnDensity = action.payload;
+    },
   },
   extraReducers(builder) {
     builder.addCase(getResponse.fulfilled, (state, action) => {
@@ -84,14 +105,23 @@ export const productSlice = createSlice({
       state.orginalData.statuses = action.payload.statuses;
 
       // state.currentData = action.payload;
-      state.currentData = state.orginalData;
+      // state.currentData = state.orginalData;
+      state.currentData.defaultData = action.payload.defaultData;
+      state.currentData.selectedData = action.payload.selectedData;
+      state.currentData.statuses = action.payload.statuses;
     });
     builder.addCase(columnDensity.fulfilled, (state, action) => {
       state.columnDensity = action.payload;
     });
   },
 });
-export const { addrow, onRowEdit, selectedProductChange } =
-  productSlice.actions;
+export const {
+  addrow,
+  onRowEdit,
+  selectedProductChange,
+  onCellEdit,
+  moveToModifier,
+  chnageColumnDenisity,
+} = productSlice.actions;
 export default productSlice.reducer;
 export { getResponse };
